@@ -3,17 +3,20 @@ import pygame
 import sys
 from pygame.locals import *
 from random import randint
+import time
+
 
 class App:
 
-    def __init__(self, n=20, dt=0, dx=10):
+    def __init__(self, n=10, dt=0, dx=20):
         self.n = n
         self.dt = dt
         self.grid = [[False for i in range(0, 2 * n)] for j in range(0, 2 * n)]
         self.reset_grid()
 
+        self._running = True
         self.w = self.h = dx
-        self.size = self.weight, self.height = 2 * n * self.w, 2 * n * self.h
+        self.size = 2 * n * self.w + 100, 2 * n * self.h
         self.screen = pygame.display.set_mode(self.size)
 
         self.blackSquare = pygame.Surface((self.w, self.w))
@@ -21,18 +24,26 @@ class App:
         self.WhiteSquare = pygame.Surface((self.w, self.w))
         self.blackSquare.fill((220,220,220))
 
+        self.results = []
+
     def reset_display(self):
         for i in range(0, 2 * self.n):
             for j in range(0, 2 * self.n):
                 self.draw_square(i, j)
-        self._running = True
 
     def reset_grid(self):
-        for i in range(self.n // 2, 3 * self.n // 2):
-            for j in range(self.n // 2, 3 * self.n // 2):
-                print i,j
-                self.grid[i][j] = True
+        def is_middle(i, j):
+            return (i >= self.n // 2 and
+                    i < self.n * 3 // 2 and
+                    j >= self.n // 2 and
+                    j < self.n * 3 // 2)
 
+        for i in range(0, 2 * self.n):
+            for j in range(0, 2 * self.n):
+                if is_middle(i, j):
+                    self.grid[i][j] = True
+                else:
+                    self.grid[i][j] = False
 
     def draw_square(self, i, j):
         self.screen.blit(
@@ -51,13 +62,28 @@ class App:
 
         self.reset_display()
         clock = pygame.time.Clock()
+        start = pygame.time.get_ticks()
         while self._running:
             clock.tick(self.dt)
             self.random_flip()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                        sys.exit()
+                    self._running = False
+                    break
+                if event.type == pygame.KEYUP:
+                    if event.key == K_SPACE:
+                        self.results.append(pygame.time.get_ticks() - start)
+                        self.reset_grid()
+                        self.reset_display()
+                        start = pygame.time.get_ticks()
+                    elif event.key == K_q:
+                        self._running = False
+                        break
             pygame.display.flip()
+
+        for result in self.results:
+            print result
+
         pygame.quit()
 
 
