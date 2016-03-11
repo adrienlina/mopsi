@@ -3,22 +3,28 @@ import pygame
 import sys
 from pygame.locals import *
 from random import randint
-import time
-from barplot import BarPlot
+import math
 
 
 class App:
 
-    def __init__(self, n=20, dt=0, dx=10, precision=20):
+    def __init__(self, n=10, dt=0, dx=10, precision=20):
         self.n = n
-        self.m = n * n
+        self.m = 2 * n * 2 * n
         self.dt = dt
         self.grid = [[False for i in range(0, 2 * n)] for j in range(0, 2 * n)]
+
+        pygame.init()
+
+        plot_size = 600
+        self.margin = 30
+        self.epsilon = 3
+        self.font = pygame.font.SysFont("arial", 15)
 
         self._running = True
         self.w = self.h = dx
 
-        self.size = 2 * n * self.w + 400, 2 * n * self.h
+        self.size = 2 * n * self.w + plot_size + 2 * self.margin, 2 * n * self.h
 
         self.screen = pygame.display.set_mode(self.size)
 
@@ -27,8 +33,11 @@ class App:
         self.whiteSquare = pygame.Surface((self.w, self.w))
         self.whiteSquare.fill((220,220,220))
 
-        self.plot_rect = pygame.Rect(2 * n * self.w, 0, 400, 2 * n * self.h)
-        self.plot_backgound = pygame.Surface((400, 2 * self.n * self.h))
+        self.other_rect = pygame.Rect(2 * n * self.w, 0, plot_size + 2 * self.margin, 2 * n * self.h)
+        self.other_background = pygame.Surface(self.other_rect.size)
+        self.other_background.fill((0,0,0))
+        self.plot_rect = pygame.Rect(2 * n * self.w + self.margin, self.margin, plot_size, 2 * n * self.h - 2 * self.margin)
+        self.plot_backgound = pygame.Surface(self.plot_rect.size)
         self.plot_backgound.fill((250,250,250))
 
         self.results = []
@@ -42,6 +51,10 @@ class App:
             for j in range(0, 2 * self.n):
                 self.draw_square(i, j)
 
+        self.screen.blit(
+            self.other_background,
+            self.other_rect
+        )
         self.screen.blit(
             self.plot_backgound,
             self.plot_rect
@@ -57,17 +70,32 @@ class App:
             maximum = max(self.repartition)
 
             bar_size = width / nb_data
-            # real_axis = self.axis if self.axis else range(0, nb_data)
+
+            nlogn = int(self.n * math.log(self.n) / 2)
+            self.draw_bar(
+                left + (nlogn / self.maximum) * bar_size,
+                top + height,
+                bar_size,
+                height,
+                (100,200,100)
+            )
 
             for i in range(0, nb_data):
                 self.draw_bar(
                     left + i * bar_size,
                     top + height,
                     bar_size,
-                    self.repartition[i] * height / maximum
+                    self.repartition[i] * height / maximum,
+                    (200,100,100)
                 )
-            print self.repartition
-
+                self.screen.blit(
+                    self.font.render(str(self.repartition[i]), 1, (255,255,255)),
+                    (left + i * bar_size + self.epsilon, top + height - self.margin / 2 - self.epsilon)
+                )
+                self.screen.blit(
+                    self.font.render(str(i * self.maximum / self.precision), 1, (255,255,255)),
+                    (left + i * bar_size + self.epsilon, top + height + self.margin / 2 - self.epsilon)
+                )
 
     def reset_grid(self):
         def is_middle(i, j):
@@ -87,11 +115,11 @@ class App:
 
     def calculate_repartition(self):
         if self.results:
-            maximum = max(self.results)
+            self.maximum = max(self.results)
             repartition = [0] * self.precision
 
             for result in self.results:
-                repartition[(result * self.precision - 1) // maximum] += 1
+                repartition[(result * self.precision - 1) // self.maximum] += 1
 
             self.repartition = repartition
         else:
@@ -103,9 +131,9 @@ class App:
             self.blackSquare.get_rect().move([i * self.w, j * self.w])
         )
 
-    def draw_bar(self, left, bottom, width, height):
+    def draw_bar(self, left, bottom, width, height, color):
         surface = pygame.Surface((width, height))
-        surface.fill((255,0,0))
+        surface.fill(color)
         rect = pygame.Rect(
             left,
             bottom - height,
@@ -124,8 +152,6 @@ class App:
         self.draw_square(i, j)
 
     def on_execute(self):
-        pygame.init()
-
         self.reset_display()
         clock = pygame.time.Clock()
         counter = 0
