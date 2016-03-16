@@ -2,11 +2,10 @@
 import pygame
 import sys
 from pygame.locals import *
-from random import randint
 import math
 
 
-class App:
+class MixingApp:
 
     def __init__(self, n=10, dt=0, dx=10, precision=20):
         self.n = n
@@ -145,11 +144,8 @@ class App:
             rect
         )
 
-    def random_flip(self):
-        i = randint(0, 2 * self.n-1)
-        j = randint(0, 2 * self.n-1)
-        self.grid[i][j] = not self.grid[i][j]
-        self.draw_square(i, j)
+    def random_action(self):
+        pass
 
     def on_execute(self):
         self.reset_display()
@@ -157,7 +153,7 @@ class App:
         counter = 0
         while self._running:
             clock.tick(self.dt)
-            self.random_flip()
+            self.random_action()
             counter += 1
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
