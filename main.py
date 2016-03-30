@@ -7,7 +7,7 @@ import math
 
 class MixingApp:
 
-    def __init__(self, n=15, dt=0, dx=15, precision=20):
+    def __init__(self, n=10, dt=0, dx=20, precision=20):
         self.n = n
         self.m = 2 * n * 2 * n
         self.dt = dt
